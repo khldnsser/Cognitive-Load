@@ -1,3 +1,5 @@
 .venv
 /raw_data
 /documents
+test.py
+CLAUDE.md
