@@ -15,7 +15,7 @@ services:
       - "9090:9090"
     volumes:
       - ./service-mounts/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus-data:/prometheus
+      - prometheus-data:/prometheus
     
   grafana:
     image: grafana/grafana:11.6
@@ -23,8 +23,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./service-mounts/grafana-data:/var/lib/grafana
+      - grafana-data:/var/lib/grafana
 
-    
-    
-    
+volumes:
+  grafana-data:
+  mlruns:
+  prometheus-data:
+
