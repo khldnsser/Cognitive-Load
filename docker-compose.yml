@@ -6,12 +6,13 @@ services:
       mlflow server
       --host 0.0.0.0
       --port 5001
-      --backend-store-uri /mlruns
-      --default-artifact-root /mlruns
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+      --serve-artifacts
     ports:
       - "5001:5001"
     volumes:
-      - ./mlruns:/mlruns
+      - mlflow-data:/mlflow
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')"]
       interval: 30s
@@ -60,5 +61,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  mlflow-data:
   prometheus-data:
   grafana-data:

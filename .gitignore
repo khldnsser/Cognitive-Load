@@ -9,10 +9,6 @@ pipeline_design_notes.md
 
 data/processed/
 
-# MLflow artifact/metadata store (bind-mounted into the mlflow container)
-/mlruns/*
-!/mlruns/.gitkeep
-
 __pycache__/
 *.pyc
 *.pyo

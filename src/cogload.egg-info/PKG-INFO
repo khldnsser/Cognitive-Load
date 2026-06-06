@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: cogload
+Version: 0.1.0
+Requires-Python: >=3.11
+Requires-Dist: pandas>=2.0
+Requires-Dist: numpy>=1.26
+Requires-Dist: scipy>=1.11
+Requires-Dist: neurokit2>=0.2
+Requires-Dist: xgboost>=2.0
+Requires-Dist: scikit-learn>=1.3
+Requires-Dist: mlflow>=3.0
+Requires-Dist: matplotlib>=3.7
+Requires-Dist: pyarrow>=14.0
+Requires-Dist: tqdm>=4.65
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-cov>=5.0; extra == "dev"
