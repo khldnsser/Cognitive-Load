@@ -27,6 +27,9 @@ src/cogload/models/ensemble.py
 src/cogload/models/xgboost_model.py
 src/cogload/preprocessing/__init__.py
 src/cogload/preprocessing/normalization.py
+src/cogload/serving/__init__.py
+src/cogload/serving/model_loader.py
+src/cogload/serving/schemas.py
 src/cogload/tracking/__init__.py
 src/cogload/tracking/mlflow_utils.py
 tests/test_alignment.py
