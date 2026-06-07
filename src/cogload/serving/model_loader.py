@@ -35,9 +35,10 @@ def load_champion() -> FoldEnsembleModel:
         logger.info("Loading model from MODEL_URI=%s", uri)
         return _load(uri)
 
-    # Fall back to local MLflow registry
-    logger.info("MODEL_URI not set — loading from MLflow registry at %s", MLFLOW_URI)
-    mlflow.set_tracking_uri(MLFLOW_URI)
+    # Fall back to local MLflow registry (MLFLOW_TRACKING_URI env var overrides config)
+    tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", MLFLOW_URI)
+    logger.info("MODEL_URI not set — loading from MLflow registry at %s", tracking_uri)
+    mlflow.set_tracking_uri(tracking_uri)
     return _load(_REGISTRY_URI)
 
 

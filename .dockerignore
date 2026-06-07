@@ -1,0 +1,16 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+.DS_Store
+raw_data/
+documents/
+data/processed/
+notebooks/
+tests/
+.git
+*.zip
+Final-Plan.md
+pipeline_design_notes.md
+CLAUDE.md
+results_report.md

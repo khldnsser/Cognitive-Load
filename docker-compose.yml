@@ -60,6 +60,67 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  iep2-calibration:
+    build:
+      context: .
+      dockerfile: serving/iep2_calibration/Dockerfile
+    container_name: iep2-calibration
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  iep1-inference:
+    build:
+      context: .
+      dockerfile: serving/iep1_inference/Dockerfile
+    container_name: iep1-inference
+    ports:
+      - "8000:8000"
+    environment:
+      # socat in start.sh forwards localhost:5001 → mlflow:5001 so the HTTP
+      # Host header reads "localhost", passing MLflow's DNS-rebinding check.
+      - MLFLOW_TRACKING_URI=http://localhost:5001
+      - MLFLOW_SERVICE=mlflow
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  eep:
+    build:
+      context: .
+      dockerfile: serving/eep/Dockerfile
+    container_name: eep
+    ports:
+      - "8080:8080"
+    environment:
+      - IEP1_URL=http://iep1-inference:8000
+      - IEP2_URL=http://iep2-calibration:8001
+    depends_on:
+      iep1-inference:
+        condition: service_healthy
+      iep2-calibration:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
 volumes:
   mlflow-data:
   prometheus-data:

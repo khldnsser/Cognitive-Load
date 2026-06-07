@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ------------------------------------------------------------------
+  # Unit tests + golden regression (no Docker, fast)
+  # ------------------------------------------------------------------
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package + dev deps
+        run: pip install ".[dev,serving]"
+
+      - name: Run unit tests (excludes integration + e2e)
+        run: |
+          pytest tests/ \
+            --ignore=tests/integration \
+            --ignore=tests/e2e \
+            -v --tb=short
+
+  # ------------------------------------------------------------------
+  # Integration tests (full Docker Compose stack)
+  # ------------------------------------------------------------------
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package + dev deps
+        run: pip install ".[dev,serving]"
+
+      # Step 1: start MLflow only so we can register the test model
+      - name: Start MLflow
+        run: docker compose up -d mlflow
+
+      - name: Wait for MLflow
+        run: |
+          timeout 90 bash -c \
+            'until curl -sf http://localhost:5001/health > /dev/null 2>&1; do sleep 3; done'
+          echo "MLflow ready"
+
+      # Step 2: register a minimal test model so IEP-1 can load it
+      - name: Register CI test model
+        run: python scripts/register_test_model.py --mlflow-uri http://localhost:5001
+
+      # Step 3: start the remaining services
+      - name: Start serving stack
+        run: docker compose up -d iep2-calibration iep1-inference eep
+
+      # Step 4: wait for IEP-1 to finish loading the model
+      - name: Wait for IEP-1 model load
+        run: |
+          timeout 120 bash -c '
+            while true; do
+              STATUS=$(curl -sf http://localhost:8000/health \
+                | python3 -c "import sys,json; print(json.load(sys.stdin)[\"status\"])" 2>/dev/null)
+              [ "$STATUS" = "ok" ] && break
+              echo "IEP-1 status: $STATUS — waiting..."
+              sleep 5
+            done
+          '
+
+      - name: Wait for IEP-2 and EEP
+        run: |
+          timeout 60 bash -c \
+            'until curl -sf http://localhost:8001/health > /dev/null; do sleep 3; done'
+          timeout 60 bash -c \
+            'until curl -sf http://localhost:8080/health > /dev/null; do sleep 3; done'
+
+      # Step 5: run integration tests
+      - name: Run integration tests
+        run: pytest tests/integration -v --tb=short
+
+      # Step 6: run E2E tests against localhost stack
+      - name: Run E2E tests (local stack)
+        run: pytest tests/e2e -v --tb=short
+        env:
+          EEP_URL: http://localhost:8080
+
+      - name: Tear down
+        if: always()
+        run: docker compose down
