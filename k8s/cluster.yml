@@ -1,0 +1,24 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: cogload
+  region: eu-central-1
+
+# OIDC provider is required for IRSA (IAM Roles for Service Accounts).
+# IEP-1 uses IRSA to pull the model artifact from S3 without static credentials.
+iam:
+  withOIDC: true
+
+managedNodeGroups:
+  - name: workers
+    instanceType: t3.small    # 2 vCPU / 2 GB — minimum viable for demo (t3.medium blocked by account policy)
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 3
+    privateNetworking: false   # public subnets — no NAT gateway needed (cost saving)
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly

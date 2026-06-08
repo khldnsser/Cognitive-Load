@@ -27,6 +27,7 @@ serving = [
     "httpx>=0.27",
     "slowapi>=0.1.9",
     "prometheus-client>=0.20",
+    "boto3>=1.34",
 ]
 
 [tool.setuptools.packages.find]

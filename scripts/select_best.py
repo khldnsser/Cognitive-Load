@@ -26,6 +26,14 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true",
                         help="Print leaderboard without registering.")
+    parser.add_argument(
+        "--min-score", type=float, default=0.0,
+        help=(
+            "Promotion gate: refuse to register if the best candidate's "
+            "selection_score (mean_F1 - 0.5*std_F1) is below this value. "
+            "Default 0.0 (always promote). Recommended: 0.80."
+        ),
+    )
     args = parser.parse_args()
 
     setup_mlflow()
@@ -58,6 +66,25 @@ def main() -> None:
     if args.dry_run:
         print("(dry-run — skipping registration)")
         return
+
+    # Promotion gate
+    if best_score < args.min_score:
+        print(
+            f"\nPROMOTION BLOCKED: best selscore {best_score:.4f} < "
+            f"required {args.min_score:.4f}.\n"
+            "Re-train with improved hyperparameters or lower --min-score."
+        )
+        sys.exit(2)
+
+    # Save current champion as previous-champion so rollback is possible
+    try:
+        current_mv = client.get_model_version_by_alias(MODEL_REGISTRY_NAME, "champion")
+        client.set_registered_model_alias(
+            MODEL_REGISTRY_NAME, "previous-champion", current_mv.version
+        )
+        print(f"Saved previous champion (v{current_mv.version}) as @previous-champion")
+    except Exception:
+        pass  # no existing champion yet
 
     # Fetch the winning run's metrics to attach as registry tags
     best_run  = client.get_run(best_run_id)

@@ -59,11 +59,7 @@ def test_e2e_health():
 @pytest.mark.skipif(not _reachable(), reason=f"EEP not reachable at {EEP_URL}")
 @pytest.mark.skipif(not _model_ok(), reason="IEP-1 model not loaded")
 def test_e2e_calibrate_then_predict():
-    """Golden path: calibrate on rest data, predict on a 60s window.
-
-    This is the §8 hard rule: E2E test must pass against the deployed system.
-    After Stage 8, run with EEP_URL=https://<eks-nlb-url> in CI.
-    """
+    """Golden path: calibrate on rest data, predict on a 60s window."""
     # 1. Calibrate
     calib_r = httpx.post(
         f"{EEP_URL}/calibrate",
@@ -75,6 +71,7 @@ def test_e2e_calibrate_then_predict():
     assert calib["windows_used"] == 3
     calib_params = calib["params"]
     assert set(calib_params["mu"].keys()) == set(calib_params["sigma"].keys())
+    print(f"\n  [calibrate] windows_used={calib['windows_used']}  features={len(calib_params['mu'])}")
 
     # 2. Predict with calibration
     pred_r = httpx.post(
@@ -90,11 +87,15 @@ def test_e2e_calibrate_then_predict():
     assert result["calibrated"] is True
     assert result["threshold"] == pytest.approx(0.20)
     assert result["drift_score"] is not None
+    label = "HIGH" if result["prediction"] == 1 else "LOW"
+    print(f"  [predict]   probability={result['probability']:.3f}  prediction={label}"
+          f"  drift_score={result['drift_score']:.3f}  calibrated={result['calibrated']}")
 
     # 3. Metrics populated
     metrics_r = httpx.get(f"{EEP_URL}/metrics", timeout=5)
     assert metrics_r.status_code == 200
     assert "eep_requests_total" in metrics_r.text
+    print(f"  [metrics]   eep_requests_total present")
 
 
 @pytest.mark.skipif(not _reachable(), reason=f"EEP not reachable at {EEP_URL}")

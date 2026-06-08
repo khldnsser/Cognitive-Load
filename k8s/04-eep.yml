@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eep
+  namespace: cogload
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eep
+  template:
+    metadata:
+      labels:
+        app: eep
+    spec:
+      containers:
+        - name: eep
+          image: 879381262015.dkr.ecr.eu-central-1.amazonaws.com/cogload-eep:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: cogload-config
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+# LoadBalancer creates an AWS Network Load Balancer — this is the public endpoint.
+apiVersion: v1
+kind: Service
+metadata:
+  name: eep
+  namespace: cogload
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  selector:
+    app: eep
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer

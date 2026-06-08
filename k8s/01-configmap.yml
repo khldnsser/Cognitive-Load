@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cogload-config
+  namespace: cogload
+data:
+  IEP1_URL: "http://iep1-inference:8000"
+  IEP2_URL: "http://iep2-calibration:8001"
+  IEP_TIMEOUT_S: "15.0"
+  IEP_MAX_RETRIES: "2"
