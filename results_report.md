@@ -113,9 +113,9 @@ Registered in MLflow Model Registry as `cogload-ensemble@champion`.
 
 ---
 
-## Infrastructure
+---
 
-- **MLflow** (SQLite backend + `--serve-artifacts`): tracks params, metrics, datasets, artifacts, and model registry. All artifact I/O proxied through the server — no direct filesystem writes from the client.
-- **Prometheus + Grafana**: monitoring stack, provisioned via Docker Compose.
-- Package: installable via `pip install -e .` (`pyproject.toml`).
-- Tests: 16 pytest tests covering windowing, alignment, metrics, and a LOSO leakage guard.
+*This report covers the modeling and evaluation pipeline. For the serving system
+(EEP + IEPs), cloud deployment, observability, MLOps automation, testing, and engineering
+tradeoffs — plus problem framing and positioning — see the combined
+[`docs/CogLoad_Documentation.docx`](docs/CogLoad_Documentation.docx) (Business + Technical).*
